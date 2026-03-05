@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneGravity — On-Chain Capital Coordination</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#020208;--bg2:#06060E;--bg3:#0A0A14;
+  --card:rgba(255,255,255,0.015);
+  --border:rgba(255,255,255,0.04);--border2:rgba(255,255,255,0.07);
+  --t1:#E8E8F0;--t2:#55556E;--t3:#2A2A3E;
+  --ac:#2563EB;--acl:#3B82F6;--ac2:#818CF8;
+  --acs:rgba(37,99,235,0.05);--glow:rgba(37,99,235,0.2);
+  --grn:#10B981;
+  --fd:'Plus Jakarta Sans',sans-serif;--fb:'Inter',sans-serif
+}
+html{background:var(--bg);overflow-x:hidden}
+body{font-family:var(--fb);background:var(--bg);color:var(--t1);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--t3);border-radius:2px}
+
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#warpCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:0;transition:opacity .2s}
+#warpCanvas.on{opacity:1}
+
+.noise{position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;animation:nm 8s steps(10) infinite}
+@keyframes nm{0%{transform:translate(0)}100%{transform:translate(-10%,-10%)}}
+.aorb{position:fixed;border-radius:50%;pointer-events:none;z-index:1;filter:blur(100px)}
+.aorb-1{width:600px;height:600px;background:rgba(37,99,235,0.035);top:-15%;right:-12%;animation:ao1 22s ease-in-out infinite}
+.aorb-2{width:500px;height:500px;background:rgba(99,102,241,0.025);bottom:5%;left:-10%;animation:ao2 28s ease-in-out infinite}
+@keyframes ao1{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,70px)}}
+@keyframes ao2{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,-50px)}}
+
+.wrap{position:relative;z-index:3}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;transition:all .5s;background:transparent}
+.nav.s{background:rgba(2,2,8,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:14px 48px}
+.nav-logo{font-family:var(--fd);font-size:18px;font-weight:700;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+.nav-logo .nd{width:7px;height:7px;background:var(--ac);border-radius:50%;box-shadow:0 0 12px var(--glow)}
+.nav-r{display:flex;gap:32px;align-items:center}
+.nav-r a{color:var(--t2);text-decoration:none;font-size:11px;letter-spacing:1px;transition:color .3s;text-transform:uppercase}
+.nav-r a:hover{color:var(--t1)}
+.nav-cta{background:rgba(255,255,255,0.04)!important;color:var(--t1)!important;padding:9px 22px;border-radius:8px;border:1px solid var(--border2)!important;font-size:11px!important;letter-spacing:1px!important;text-transform:uppercase!important;transition:all .4s!important}
+.nav-cta:hover{border-color:rgba(37,99,235,0.3)!important;box-shadow:0 0 24px var(--glow)!important}
+
+/* HERO */
+.hero{position:relative;height:100vh;min-height:700px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hero-beam{position:absolute;width:1px;height:60%;background:linear-gradient(to bottom,transparent,rgba(37,99,235,0.08),transparent);top:20%}
+.hero-beam-1{left:15%;animation:hb 8s ease-in-out infinite}
+.hero-beam-2{right:15%;animation:hb 8s 2s ease-in-out infinite}
+@keyframes hb{0%,100%{opacity:.25}50%{opacity:.6}}
+.hero-ring{position:absolute;border:1px solid rgba(37,99,235,0.03);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.hero-ring-1{width:450px;height:450px;animation:hr 20s linear infinite}
+.hero-ring-2{width:700px;height:700px;animation:hr 30s linear infinite reverse}
+@keyframes hr{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.hero-c{position:relative;z-index:10;text-align:center;max-width:900px;padding:0 32px}
+.hero-ey{display:inline-flex;align-items:center;gap:10px;padding:8px 20px;background:rgba(37,99,235,0.03);border:1px solid rgba(37,99,235,0.07);border-radius:100px;font-size:10px;font-weight:500;color:var(--acl);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:44px}
+.hero-ey .ld{width:5px;height:5px;background:var(--grn);border-radius:50%;box-shadow:0 0 8px rgba(16,185,129,0.5);animation:lp 2s infinite}
+@keyframes lp{0%,100%{box-shadow:0 0 8px rgba(16,185,129,0.3)}50%{box-shadow:0 0 18px rgba(16,185,129,0.6)}}
+.hero h1{font-family:var(--fd);font-size:clamp(54px,9vw,108px);font-weight:800;line-height:.94;letter-spacing:-4.5px;margin-bottom:28px}
+.hero h1 .ln{display:block;overflow:hidden}
+.hero h1 .li{display:block;transform:translateY(115%);animation:lr 1s cubic-bezier(.16,1,.3,1) forwards}
+.hero h1 .li.d2{animation-delay:.15s}
+@keyframes lr{to{transform:translateY(0)}}
+.gt{background:linear-gradient(135deg,#60A5FA 0%,var(--acl) 30%,var(--ac2) 60%,#A78BFA 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gs 6s ease-in-out infinite}
+@keyframes gs{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero-sub{font-family:var(--fd);font-size:clamp(12px,1.4vw,16px);font-weight:300;color:var(--t3);letter-spacing:7px;text-transform:uppercase;margin-bottom:28px}
+.hero-desc{font-size:15px;line-height:1.8;color:var(--t2);max-width:440px;margin:0 auto 52px;font-weight:300}
+.hero-btns{display:flex;gap:14px;justify-content:center}
+.btn-p{display:inline-flex;align-items:center;gap:12px;background:rgba(37,99,235,0.12);backdrop-filter:blur(16px);color:#fff;padding:15px 36px;border-radius:10px;font-family:var(--fd);font-size:13px;font-weight:600;border:1px solid rgba(37,99,235,0.2);cursor:pointer;transition:all .4s;box-shadow:0 4px 24px rgba(37,99,235,0.15);position:relative;overflow:hidden;text-decoration:none}
+.btn-p::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);transition:left .5s}
+.btn-p:hover::before{left:100%}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(37,99,235,0.3)}
+.btn-p .aw{transition:transform .3s}.btn-p:hover .aw{transform:translateX(4px)}
+.btn-g{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);color:var(--t2);padding:15px 28px;border-radius:10px;border:1px solid var(--border);font-family:var(--fd);font-size:13px;font-weight:500;cursor:pointer;transition:all .3s;text-decoration:none}
+.btn-g:hover{color:var(--t1);border-color:var(--border2)}
+.scroll-ind{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;animation:fi 1s 2s forwards}
+.scroll-ind span{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--t3)}
+.scroll-m{width:20px;height:32px;border:1.5px solid var(--t3);border-radius:10px;position:relative}
+.scroll-m::before{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:2px;height:7px;background:var(--acl);border-radius:1px;animation:sw 2s infinite}
+@keyframes sw{0%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(12px)}}
+@keyframes fi{to{opacity:1}}
+
+/* ===== IMMERSIVE — NO STICKY, FIXED OVERLAY ===== */
+.imm-scroll-space{position:relative;height:400vh;z-index:1}
+/* This is FIXED, not sticky. JS shows/hides it. */
+.imm-fixed{position:fixed;top:0;left:0;width:100%;height:100vh;z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:none;visibility:hidden;background:var(--bg)}
+.imm-fixed.active{visibility:visible;pointer-events:auto}
+
+.imm-phase{position:absolute;top:50%;left:50%;width:100%;max-width:760px;padding:0 32px;text-align:center;opacity:0;transform:translate(-50%,-50%) scale(0.3);will-change:transform,opacity}
+.imm-phase h2{font-family:var(--fd);font-size:clamp(32px,5.5vw,68px);font-weight:800;letter-spacing:-3px;line-height:1.04;margin-bottom:24px}
+.imm-phase p{font-size:16px;color:var(--t2);line-height:1.75;max-width:520px;margin:0 auto;font-weight:300}
+.imm-phase .imm-stats{display:flex;gap:60px;justify-content:center;margin-top:44px}
+.imm-phase .imm-stats div{text-align:center}
+.imm-phase .imm-stats .isv{font-family:var(--fd);font-size:clamp(34px,5vw,56px);font-weight:800;letter-spacing:-2px;margin-bottom:6px}
+.imm-phase .imm-stats .isl{font-size:10px;color:var(--t2);letter-spacing:2.5px;text-transform:uppercase}
+.imm-phase .ph-icon{width:60px;height:60px;border-radius:16px;background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 32px}
+.imm-phase .ph-tags{display:flex;gap:10px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+.imm-phase .ph-tag{padding:7px 18px;background:rgba(37,99,235,0.03);border:1px solid rgba(37,99,235,0.07);border-radius:100px;font-size:11px;color:var(--acl);letter-spacing:.8px;font-weight:500}
+
+.imm-dots{position:absolute;bottom:13%;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+.imm-dots .dd{width:6px;height:6px;border-radius:50%;background:var(--t3);transition:all .5s}
+.imm-dots .dd.on{background:var(--acl);box-shadow:0 0 12px var(--glow);width:28px;border-radius:3px}
+.imm-progress{position:absolute;right:36px;top:18%;height:64%;width:2px;background:rgba(255,255,255,0.025);border-radius:1px;z-index:10}
+.imm-prog-fill{width:100%;height:0%;background:linear-gradient(to bottom,var(--ac),var(--acl));border-radius:1px;box-shadow:0 0 10px var(--glow)}
+
+/* METRICS */
+.metrics{position:relative;padding:80px 48px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);overflow:hidden;z-index:3}
+.metrics::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:300px;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,0.2),transparent)}
+.mg{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.mi{text-align:center;padding:20px;position:relative}
+.mi:not(:last-child)::after{content:'';position:absolute;right:0;top:20%;height:60%;width:1px;background:var(--border)}
+.mv{font-family:var(--fd);font-size:clamp(32px,4.5vw,54px);font-weight:800;letter-spacing:-2.5px;margin-bottom:6px}
+.ml{font-size:10px;color:var(--t2);letter-spacing:2.5px;text-transform:uppercase}
+
+/* SECTIONS */
+.sec{padding:140px 48px;max-width:1200px;margin:0 auto;position:relative}
+.sl{font-size:10px;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;color:var(--acl);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.sl::before{content:'';width:20px;height:1px;background:var(--acl)}
+.st{font-family:var(--fd);font-size:clamp(34px,4.5vw,54px);font-weight:800;letter-spacing:-2.5px;line-height:1.06;margin-bottom:20px}
+.sd{font-size:15px;line-height:1.75;color:var(--t2);max-width:480px;font-weight:300}
+
+.hg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:72px}
+.hc{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:44px 28px;position:relative;overflow:hidden;transition:all .6s;cursor:pointer}
+.hc .cg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity .5s;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(37,99,235,0.06) 0%,transparent 60%)}
+.hc:hover .cg{opacity:1}
+.hc:hover{transform:translateY(-6px);border-color:rgba(37,99,235,0.1);box-shadow:0 24px 48px rgba(0,0,0,0.4)}
+.hc::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .6s}
+.hc:hover::after{width:100%}
+.hn{font-family:var(--fd);font-size:60px;font-weight:800;color:rgba(37,99,235,0.03);letter-spacing:-3px;position:absolute;top:14px;right:18px;line-height:1}
+.hi{width:44px;height:44px;background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.07);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;transition:all .4s}
+.hc:hover .hi{background:rgba(37,99,235,0.08);box-shadow:0 0 16px var(--glow)}
+.hc h3{font-family:var(--fd);font-size:18px;font-weight:700;letter-spacing:-.5px;margin-bottom:12px}
+.hc p{font-size:13.5px;line-height:1.7;color:var(--t2);font-weight:300}
+
+.osec{padding:140px 48px;background:var(--bg2);position:relative;overflow:hidden}
+.ow{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.oc{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:44px;position:relative;overflow:hidden;cursor:pointer;transition:all .6s}
+.oc .cg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity .5s;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(37,99,235,0.04) 0%,transparent 60%)}
+.oc:hover .cg{opacity:1}
+.oc:hover{border-color:rgba(37,99,235,0.08);box-shadow:0 32px 64px rgba(0,0,0,0.3)}
+.oc::before{content:'';position:absolute;top:0;left:10%;width:80%;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,0.12),transparent)}
+.ob{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.08);border-radius:100px;font-size:11px;font-weight:500;color:var(--grn);margin-bottom:22px}
+.ob .sd2{width:5px;height:5px;background:var(--grn);border-radius:50%;animation:lp 2s infinite}
+.oc h3{font-family:var(--fd);font-size:22px;font-weight:700;letter-spacing:-.7px;margin-bottom:26px;line-height:1.2}
+.os{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.si{padding:14px;background:rgba(255,255,255,0.01);border-radius:12px;border:1px solid rgba(255,255,255,0.025)}
+.sil{font-size:10px;color:var(--t2);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase}
+.siv{font-family:var(--fd);font-size:19px;font-weight:700;letter-spacing:-.5px}
+.pw{margin-bottom:18px}
+.ph2{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.phl{font-size:11px;color:var(--t2)}.php{font-family:var(--fd);font-size:12px;font-weight:700;color:var(--acl)}
+.pb{height:3px;background:rgba(255,255,255,0.025);border-radius:2px;overflow:hidden}
+.pf{height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--acl),var(--ac2));background-size:200% 100%;border-radius:2px;transition:width 2s;box-shadow:0 0 14px var(--glow);animation:ps 3s linear infinite}
+@keyframes ps{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.ic{font-size:11px;color:var(--t2);display:flex;align-items:center;gap:7px;margin-bottom:26px}
+.obtn{display:block;width:100%;padding:15px;background:rgba(37,99,235,0.12);color:#fff;border:1px solid rgba(37,99,235,0.2);border-radius:12px;font-family:var(--fd);font-size:13px;font-weight:600;cursor:pointer;transition:all .4s;box-shadow:0 4px 20px rgba(37,99,235,0.12);position:relative;overflow:hidden}
+.obtn:hover{box-shadow:0 8px 32px rgba(37,99,235,0.25);transform:translateY(-2px)}
+.tg{padding:5px 14px;background:rgba(37,99,235,0.03);border:1px solid rgba(37,99,235,0.06);border-radius:6px;font-size:10px;color:var(--acl);letter-spacing:.5px;font-weight:500}
+
+.flow-sec{padding:140px 48px;position:relative;overflow:hidden}
+.flow-wrap{max-width:1100px;margin:0 auto}
+.flow-header{text-align:center;margin-bottom:80px}
+.flow-steps{display:flex;align-items:flex-start;justify-content:center;position:relative}
+.flow-step{flex:1;text-align:center;padding:0 18px}
+.flow-step .fs-num{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:var(--fd);font-size:14px;font-weight:700;color:var(--acl);transition:all .5s;background:var(--bg);position:relative;z-index:2}
+.flow-step:hover .fs-num{border-color:var(--acl);box-shadow:0 0 28px var(--glow)}
+.flow-step h4{font-family:var(--fd);font-size:15px;font-weight:700;margin-bottom:8px}
+.flow-step p{font-size:12px;color:var(--t2);line-height:1.6}
+.flow-line{position:absolute;top:26px;left:calc(12.5% + 26px);right:calc(12.5% + 26px);height:1.5px;background:var(--border);z-index:1}
+.flow-line-fill{position:absolute;top:0;left:0;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--acl));transition:width 1.8s;box-shadow:0 0 10px var(--glow)}
+.flow-line.on .flow-line-fill{width:100%}
+
+.wg{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:72px}
+.wc{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:38px;position:relative;overflow:hidden;transition:all .6s;cursor:pointer}
+.wc .cg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;transition:opacity .5s;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(37,99,235,0.04) 0%,transparent 60%)}
+.wc:hover .cg{opacity:1}
+.wc:hover{transform:translateY(-4px);border-color:rgba(37,99,235,0.07);box-shadow:0 20px 40px rgba(0,0,0,0.25)}
+.wc::after{content:'';position:absolute;top:0;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .5s}
+.wc:hover::after{width:100%}
+.wc .iw{width:40px;height:40px;background:rgba(37,99,235,0.04);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:22px;border:1px solid rgba(37,99,235,0.06)}
+.wc h3{font-family:var(--fd);font-size:17px;font-weight:700;margin-bottom:10px}
+.wc p{font-size:13px;line-height:1.7;color:var(--t2);font-weight:300}
+
+.trust{padding:56px 48px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center;background:var(--bg2)}
+.trust-label{font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:var(--t3);margin-bottom:28px}
+.trust-items{display:flex;justify-content:center;gap:44px;align-items:center;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:8px;color:var(--t2);font-size:12px;transition:color .3s}
+.trust-item:hover{color:var(--t1)}
+
+.cta{padding:180px 48px;text-align:center;position:relative;overflow:hidden}
+.cta::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(37,99,235,0.04) 0%,transparent 45%);pointer-events:none}
+.cta h2{font-family:var(--fd);font-size:clamp(42px,6.5vw,72px);font-weight:800;letter-spacing:-3.5px;margin-bottom:20px;line-height:1.04}
+.cta .sub{font-size:16px;color:var(--t2);margin-bottom:52px;max-width:400px;margin-left:auto;margin-right:auto;line-height:1.7;font-weight:300}
+
+.ft-w{border-top:1px solid var(--border)}.ft{padding:40px 48px;display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto}
+.ft-logo{font-family:var(--fd);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.ft-logo .d{width:5px;height:5px;background:var(--ac);border-radius:50%}
+.ft-links{display:flex;gap:28px}.ft-links a{color:var(--t2);text-decoration:none;font-size:11px;transition:color .3s}.ft-links a:hover{color:var(--t1)}
+.arb{background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.07);padding:4px 12px;border-radius:4px;font-weight:600;color:var(--acl);font-size:9px;letter-spacing:1.2px}
+.ft-c{text-align:center;padding:16px 48px;font-size:10px;color:var(--t3);border-top:1px solid var(--border)}
+
+.rv{opacity:0;transform:translateY(36px)}
+.rvd{opacity:1!important;transform:translateY(0)!important;transition:all .8s cubic-bezier(.16,1,.3,1)!important}
+
+@media(max-width:768px){
+  .nav{padding:16px 20px}.nav-r{display:none}
+  .hero-c{padding:0 20px}.hero h1{letter-spacing:-2px}
+  .mg{grid-template-columns:repeat(2,1fr)}.mi:not(:last-child)::after{display:none}
+  .sec{padding:80px 20px}.hg{grid-template-columns:1fr}
+  .osec{padding:80px 20px}.ow{grid-template-columns:1fr;gap:40px}
+  .wg{grid-template-columns:1fr}
+  .flow-sec{padding:80px 20px}.flow-steps{flex-direction:column;gap:32px}.flow-line{display:none}
+  .cta{padding:100px 20px}.trust{padding:40px 20px}
+  .ft{flex-direction:column;gap:20px;padding:32px 20px}
+  .imm-phase .imm-stats{flex-direction:column;gap:20px}
+  .imm-progress{display:none}
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<canvas id="bgCanvas"></canvas>
+<canvas id="warpCanvas"></canvas>
+<div class="aorb aorb-1"></div>
+<div class="aorb aorb-2"></div>
+
+<!-- IMMERSIVE FIXED OVERLAY — outside .wrap, FIXED position -->
+<div class="imm-fixed" id="immFixed">
+  <div class="imm-phase" id="ph0">
+    <div class="ph-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+    <h2>Capital Coordination<br><span class="gt">Redefined.</span></h2>
+    <p>Structured pooling. Fixed-price shares. On-chain accounting. No yield farming. No governance. Just clean, transparent capital flow.</p>
+    <div class="ph-tags"><span class="ph-tag">EVM Native</span><span class="ph-tag">Fixed Price</span><span class="ph-tag">Non-Custodial</span></div>
+  </div>
+  <div class="imm-phase" id="ph1">
+    <div class="ph-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <h2>Built for<br><span class="gt">Real Assets.</span></h2>
+    <p>Trade finance, real estate, infrastructure, commodities. Institutional-grade allocations accessible to everyone.</p>
+    <div class="imm-stats">
+      <div><div class="isv gt">$2.4M</div><div class="isl">Capital Pooled</div></div>
+      <div><div class="isv gt">12</div><div class="isl">Active Offerings</div></div>
+      <div><div class="isv gt">847</div><div class="isl">Participants</div></div>
+    </div>
+  </div>
+  <div class="imm-phase" id="ph2">
+    <div class="ph-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <h2>Transparent.<br>Immutable.<br><span class="gt">Trustless.</span></h2>
+    <p>Every share, every allocation, every participant — recorded permanently on Arbitrum. No intermediaries. No black boxes.</p>
+  </div>
+  <div class="imm-dots"><div class="dd" id="d0"></div><div class="dd" id="d1"></div><div class="dd" id="d2"></div></div>
+  <div class="imm-progress"><div class="imm-prog-fill" id="immProg"></div></div>
+</div>
+
+<div class="wrap">
+<nav class="nav" id="nav"><div class="nav-logo"><span class="nd"></span>OneGravity</div><div class="nav-r"><a href="#how">How It Works</a><a href="#offerings">Offerings</a><a href="#why">Why Us</a><a href="#" class="nav-cta">Launch App</a></div></nav>
+
+<section class="hero">
+  <div class="hero-beam hero-beam-1"></div><div class="hero-beam hero-beam-2"></div>
+  <div class="hero-ring hero-ring-1"></div><div class="hero-ring hero-ring-2"></div>
+  <div class="hero-c">
+    <div class="hero-ey rv"><span class="ld"></span>Live on Arbitrum</div>
+    <h1><span class="ln"><span class="li">One Pool.</span></span><span class="ln"><span class="li d2"><span class="gt">Infinite Pull.</span></span></span></h1>
+    <p class="hero-sub rv">Aggregate · Allocate · Accelerate</p>
+    <p class="hero-desc rv">On-chain participation in structured capital allocations. Institutional-grade pooling, open to everyone.</p>
+    <div class="hero-btns rv"><button class="btn-p" onclick="document.getElementById('offerings').scrollIntoView({behavior:'smooth'})">View Offerings <span class="aw">→</span></button><a href="#how" class="btn-g">Learn More</a></div>
+  </div>
+  <div class="scroll-ind"><span>Scroll to explore</span><div class="scroll-m"></div></div>
+</section>
+
+<!-- Scroll space for immersive — NO CONTENT, just height -->
+<div class="imm-scroll-space" id="immSec"></div>
+
+<section class="metrics">
+  <div class="mg">
+    <div class="mi rv" data-m><div class="mv" data-count="2400000" data-prefix="$">$0</div><div class="ml">Capital Pooled</div></div>
+    <div class="mi rv" data-m><div class="mv" data-count="12" data-prefix="">0</div><div class="ml">Active Offerings</div></div>
+    <div class="mi rv" data-m><div class="mv" data-count="847" data-prefix="">0</div><div class="ml">Participants</div></div>
+    <div class="mi rv" data-m><div class="mv" data-count="8" data-prefix="">0</div><div class="ml">Fully Funded</div></div>
+  </div>
+</section>
+
+<section class="sec" id="how">
+  <div class="sl rv">Process</div><div class="st rv">How It Works</div><div class="sd rv">Three steps from wallet connection to proportional on-chain ownership.</div>
+  <div class="hg">
+    <div class="hc rv"><div class="cg"></div><div class="hn">01</div><div class="hi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><h3>Browse Offerings</h3><p>Explore curated capital allocation opportunities with fixed pricing and transparent progress.</p></div>
+    <div class="hc rv"><div class="cg"></div><div class="hn">02</div><div class="hi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg></div><h3>Purchase Shares</h3><p>Connect wallet. Choose shares. Approve USDT. Confirm. On-chain, transparent, instant.</p></div>
+    <div class="hc rv"><div class="cg"></div><div class="hn">03</div><div class="hi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Track Ownership</h3><p>Proportional ownership recorded immutably on Arbitrum. View your portfolio anytime.</p></div>
+  </div>
+</section>
+
+<section class="osec" id="offerings">
+  <div class="ow">
+    <div><div class="sl rv">Featured</div><div class="st rv">Active<br>Offering</div><div class="sd rv" style="margin-bottom:32px">Participate in curated short-term trade finance. Fixed share price, transparent progress, on-chain accounting.</div><div style="display:flex;gap:10px;flex-wrap:wrap" class="rv"><span class="tg">Trade Finance</span><span class="tg">30 Days</span><span class="tg">Arbitrum</span></div></div>
+    <div class="oc rv" id="oCard"><div class="cg"></div><div class="ob"><span class="sd2"></span>Open</div><h3>Short-Term Trade Finance Allocation</h3>
+      <div class="os"><div class="si"><div class="sil">Target Raise</div><div class="siv">$20,000</div></div><div class="si"><div class="sil">Share Price</div><div class="siv">$10</div></div><div class="si"><div class="sil">Total Shares</div><div class="siv">2,000</div></div><div class="si"><div class="sil">Shares Sold</div><div class="siv">1,300</div></div></div>
+      <div class="pw"><div class="ph2"><span class="phl">Funding Progress</span><span class="php">65%</span></div><div class="pb"><div class="pf" id="pf"></div></div></div>
+      <div class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>47 investors participating</div>
+      <button class="obtn">Connect Wallet to Invest</button>
+    </div>
+  </div>
+</section>
+
+<section class="flow-sec">
+  <div class="flow-wrap">
+    <div class="flow-header"><div class="sl rv" style="justify-content:center">Capital Flow</div><div class="st rv" style="text-align:center">From Wallet<br>to Allocation</div></div>
+    <div class="flow-steps rv" id="flowSteps">
+      <div class="flow-line" id="flowLine"><div class="flow-line-fill"></div></div>
+      <div class="flow-step"><div class="fs-num">01</div><h4>Connect</h4><p>Link EVM wallet via RainbowKit</p></div>
+      <div class="flow-step"><div class="fs-num">02</div><h4>Select</h4><p>Choose offering and shares</p></div>
+      <div class="flow-step"><div class="fs-num">03</div><h4>Approve</h4><p>Authorize USDT via contract</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Own</h4><p>Shares on-chain. You're in.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="why">
+  <div style="text-align:center"><div class="sl rv" style="justify-content:center">Advantages</div><div class="st rv" style="text-align:center">Built for Institutions.<br>Open to Everyone.</div></div>
+  <div class="wg">
+    <div class="wc rv"><div class="cg"></div><div class="iw"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div><h3>On-Chain Accounting</h3><p>Every share recorded immutably on Arbitrum.</p></div>
+    <div class="wc rv"><div class="cg"></div><div class="iw"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><h3>Fixed-Price Shares</h3><p>No bonding curves. No slippage. Same price for every share.</p></div>
+    <div class="wc rv"><div class="cg"></div><div class="iw"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg></div><h3>Proportional Ownership</h3><p>Buy 5% of shares, own 5% of the allocation.</p></div>
+    <div class="wc rv"><div class="cg"></div><div class="iw"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><h3>Capital Coordination</h3><p>Pooled capital. Institutional allocation. Individual access.</p></div>
+  </div>
+</section>
+
+<section class="trust"><div class="trust-label">Infrastructure</div><div class="trust-items">
+  <div class="trust-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Audited</div>
+  <div class="trust-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Arbitrum L2</div>
+  <div class="trust-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Non-Custodial</div>
+  <div class="trust-item"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>USDT</div>
+</div></section>
+
+<section class="cta">
+  <h2 class="rv">Capital Moves<br><span class="gt">Together.</span></h2>
+  <p class="sub rv">Join the next generation of on-chain capital coordination.</p>
+  <div class="rv"><button class="btn-p" onclick="document.getElementById('offerings').scrollIntoView({behavior:'smooth'})">Explore Offerings <span class="aw">→</span></button></div>
+</section>
+
+<div class="ft-w"><div class="ft"><div class="ft-logo"><span class="d"></span>OneGravity</div><div class="ft-links"><a href="#offerings">Offerings</a><a href="#">Dashboard</a><a href="#">Docs</a></div><div><span class="arb">BUILT ON ARBITRUM</span></div></div><div class="ft-c">&copy; 2025 OneGravity. All rights reserved.</div></div>
+</div>
+
+<script>
+// ============================================================
+// CIRCULAR PARTICLES — Canvas 2D
+// ============================================================
+const cv=document.getElementById('bgCanvas'),ctx=cv.getContext('2d');
+let W=innerWidth,H=innerHeight;const dpr=Math.min(devicePixelRatio,2);
+function rsz(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);wc2.width=W*dpr;wc2.height=H*dpr;wc2.style.width=W+'px';wc2.style.height=H+'px';wctx.setTransform(dpr,0,0,dpr,0,0)}
+const NP=160,orbs=[];
+for(let i=0;i<NP;i++)orbs.push({x:Math.random()*2e3,y:Math.random()*2e3,r:Math.random()*2+.5,vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.08,alpha:Math.random()*.2+.05,pulse:Math.random()*6.28,ps:Math.random()*.005+.002});
+function drawP(){ctx.clearRect(0,0,W,H);const t=Date.now()*.001;
+for(let i=0;i<NP;i++){for(let j=i+1;j<NP;j++){const dx=orbs[i].x-orbs[j].x,dy=orbs[i].y-orbs[j].y,d=dx*dx+dy*dy;if(d<8100){const a=(1-Math.sqrt(d)/90)*.04;ctx.strokeStyle=`rgba(59,130,246,${a})`;ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(orbs[i].x,orbs[i].y);ctx.lineTo(orbs[j].x,orbs[j].y);ctx.stroke()}}}
+for(const o of orbs){o.pulse+=o.ps;const fa=o.alpha*(Math.sin(o.pulse)*.15+.85);const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*3.5);g.addColorStop(0,`rgba(59,130,246,${fa*.5})`);g.addColorStop(.5,`rgba(99,102,241,${fa*.12})`);g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=1;ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,o.y,o.r*3.5,0,6.28);ctx.fill();ctx.globalAlpha=fa;ctx.fillStyle='rgba(147,175,255,.85)';ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,6.28);ctx.fill();o.x+=o.vx+Math.sin(t+orbs.indexOf(o)*.1)*.05;o.y+=o.vy+Math.cos(t*.7+orbs.indexOf(o)*.08)*.04;if(o.x<-20)o.x=W+20;if(o.x>W+20)o.x=-20;if(o.y<-20)o.y=H+20;if(o.y>H+20)o.y=-20}
+ctx.globalAlpha=1;requestAnimationFrame(drawP)}
+drawP();
+
+// ============================================================
+// HYPERSPACE WARP
+// ============================================================
+const wc2=document.getElementById('warpCanvas'),wctx=wc2.getContext('2d');
+rsz();addEventListener('resize',rsz);
+const NSTARS=350,stars=[];
+for(let i=0;i<NSTARS;i++)stars.push({a:Math.random()*6.28,d:Math.random(),sp:Math.random()*.008+.003,len:Math.random()*35+8,al:Math.random()*.35+.1});
+let warpI=0,warpT=0;
+function drawW(){requestAnimationFrame(drawW);warpI+=(warpT-warpI)*.06;
+if(warpI<.005){wc2.classList.remove('on');return}
+wc2.classList.add('on');wctx.clearRect(0,0,W,H);
+const cx=W/2,cy=H/2,mr=Math.sqrt(cx*cx+cy*cy);
+for(const s of stars){s.d+=s.sp*warpI;if(s.d>1)s.d-=1;
+const r1=s.d*mr,r2=r1+s.len*warpI;
+wctx.strokeStyle=`rgba(120,160,255,${s.al*warpI*s.d})`;wctx.lineWidth=1+warpI*1.5;
+wctx.beginPath();wctx.moveTo(cx+Math.cos(s.a)*r1,cy+Math.sin(s.a)*r1);wctx.lineTo(cx+Math.cos(s.a)*r2,cy+Math.sin(s.a)*r2);wctx.stroke()}
+const gr=wctx.createRadialGradient(cx,cy,0,cx,cy,100*warpI);
+gr.addColorStop(0,`rgba(59,130,246,${.12*warpI})`);gr.addColorStop(1,'rgba(0,0,0,0)');
+wctx.fillStyle=gr;wctx.beginPath();wctx.arc(cx,cy,100*warpI,0,6.28);wctx.fill()}
+drawW();
+
+// ============================================================
+// CARD GLOW
+// ============================================================
+document.querySelectorAll('.cg').forEach(g=>{const c=g.parentElement;c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();g.style.setProperty('--gx',((e.clientX-r.left)/r.width)*100+'%');g.style.setProperty('--gy',((e.clientY-r.top)/r.height)*100+'%')})});
+
+// ============================================================
+// IMMERSIVE — position:fixed APPROACH (NO STICKY!)
+// ============================================================
+const nav=document.getElementById('nav');
+const immSec=document.getElementById('immSec');// the empty scroll-space div
+const immFixed=document.getElementById('immFixed');// the fixed overlay
+const phases=[document.getElementById('ph0'),document.getElementById('ph1'),document.getElementById('ph2')];
+const dots=[document.getElementById('d0'),document.getElementById('d1'),document.getElementById('d2')];
+const immProg=document.getElementById('immProg');
+let prevPhase=-1;
+
+function onScroll(){
+  const sY=window.scrollY;
+  nav.classList.toggle('s',sY>60);
+
+  // Hero parallax
+  const hc=document.querySelector('.hero-c');
+  if(sY<innerHeight){hc.style.transform='translateY('+sY*.3+'px)';hc.style.opacity=1-sY/innerHeight*.8}
+
+  // Where is the scroll-space div?
+  const rect=immSec.getBoundingClientRect();
+  const scrolled=-rect.top;// how far into the section
+  const totalScroll=immSec.offsetHeight-innerHeight;
+  const p=Math.max(0,Math.min(1,scrolled/totalScroll));
+
+  // Show/hide fixed overlay
+  const isInSection=rect.top<=0&&rect.bottom>=innerHeight;
+  if(isInSection){
+    immFixed.classList.add('active');
+  }else{
+    immFixed.classList.remove('active');
+  }
+
+  // Progress bar
+  immProg.style.height=p*100+'%';
+
+  // ===== 3 PHASES WITH ZOOM-IN =====
+  const pc=3,pl=1/pc;
+  let currentPhase=-1;
+
+  phases.forEach(function(ph,i){
+    var start=i*pl;
+    var zoomEnd=start+pl*0.18;
+    var holdEnd=start+pl*0.72;
+    var end=start+pl;
+    var sc,op;
+
+    if(p<=start){
+      sc=0.3;op=0;
+    }else if(p<=zoomEnd){
+      // ZOOM IN from 0.3 to 1.0
+      var t=(p-start)/(zoomEnd-start);
+      var ease=1-Math.pow(1-t,3);
+      sc=0.3+ease*0.7;
+      op=ease;
+    }else if(p<=holdEnd){
+      // HOLD
+      sc=1.0;op=1.0;
+      currentPhase=i;
+    }else if(p<=end){
+      // ZOOM OUT + FADE
+      var t2=(p-holdEnd)/(end-holdEnd);
+      sc=1.0+t2*0.35;
+      op=1.0-Math.pow(t2,0.4);
+      if(op>0.5)currentPhase=i;
+    }else{
+      sc=1.35;op=0;
+    }
+
+    ph.style.transform='translate(-50%,-50%) scale('+sc+')';
+    ph.style.opacity=op;
+  });
+
+  // Dots
+  var ai=currentPhase>=0?currentPhase:Math.min(Math.floor(p*pc),pc-1);
+  dots.forEach(function(d,i){if(i===ai)d.classList.add('on');else d.classList.remove('on')});
+
+  // WARP burst on phase change
+  if(ai!==prevPhase&&prevPhase>=0&&isInSection){
+    warpT=2.0;
+    setTimeout(function(){warpT=0},350);
+  }
+  prevPhase=ai;
+}
+
+// Use both scroll event AND requestAnimationFrame for smoothness
+var ticking=false;
+window.addEventListener('scroll',function(){
+  if(!ticking){requestAnimationFrame(function(){onScroll();ticking=false});ticking=true}
+},{ passive:true });
+// Initial call
+onScroll();
+
+// ============================================================
+// REVEAL
+// ============================================================
+var robs=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){var el=e.target;setTimeout(function(){el.classList.add('rvd')},50);robs.unobserve(el)}})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.rv').forEach(function(e){robs.observe(e)});
+
+// COUNT UP
+var cobs=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){var el=e.target;el.classList.add('rvd');var v=el.querySelector('.mv'),tgt=parseInt(v.dataset.count),pr=v.dataset.prefix,dur=2200,st=performance.now();
+function fmt(n){if(n>=1e6)return pr+(n/1e6).toFixed(1)+'M';if(n>=1e3)return pr+n.toLocaleString();return pr+n}
+function step(now){var p2=Math.min((now-st)/dur,1),e2=1-Math.pow(1-p2,4);v.textContent=fmt(Math.floor(e2*tgt));if(p2<1)requestAnimationFrame(step)}
+requestAnimationFrame(step);cobs.unobserve(el)}})},{threshold:.3});
+document.querySelectorAll('[data-m]').forEach(function(e){cobs.observe(e)});
+
+// PROGRESS BAR
+var pobs=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){setTimeout(function(){document.getElementById('pf').style.width='65%'},400);pobs.unobserve(e.target)}})},{threshold:.2});
+pobs.observe(document.getElementById('oCard'));
+
+// FLOW LINE
+var flobs=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){setTimeout(function(){document.getElementById('flowLine').classList.add('on')},500);flobs.unobserve(e.target)}})},{threshold:.3});
+flobs.observe(document.getElementById('flowSteps'));
+
+// HERO REVEALS
+setTimeout(function(){document.querySelectorAll('.hero .rv').forEach(function(e,i){setTimeout(function(){e.classList.add('rvd')},i*160)})},200);
+</script>
+</body>
+</html>
