@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { Badge } from "@/components/badge";
+import { TableCard } from "@/components/card";
 import type { Protocol } from "@/lib/rwa-data";
-import { riskTierTone } from "@/lib/scoring";
 
 export function ProtocolTable({ protocols }: { protocols: Protocol[] }) {
   return (
-    <div className="glass-panel overflow-hidden">
+    <TableCard>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[780px] border-collapse text-left text-sm">
           <thead className="border-b border-sky-200/10 text-xs uppercase tracking-[0.18em] text-slate-500">
@@ -33,9 +34,7 @@ export function ProtocolTable({ protocols }: { protocols: Protocol[] }) {
                 <td className="px-5 py-4 text-slate-200">{protocol.avgYield}</td>
                 <td className="px-5 py-4 text-teal-100">{protocol.oneGravityScore}</td>
                 <td className="px-5 py-4">
-                  <span className={`border px-2.5 py-1 text-xs font-semibold ${riskTierTone(protocol.riskTier)}`}>
-                    {protocol.riskTier}
-                  </span>
+                  <Badge tone={protocol.riskTier === "Prime" ? "teal" : protocol.riskTier === "Strong" ? "blue" : "amber"}>{protocol.riskTier}</Badge>
                 </td>
                 <td className={`px-5 py-4 ${protocol.sevenDayChange.startsWith("-") ? "text-rose-300" : "text-teal-300"}`}>
                   {protocol.sevenDayChange}
@@ -45,6 +44,6 @@ export function ProtocolTable({ protocols }: { protocols: Protocol[] }) {
           </tbody>
         </table>
       </div>
-    </div>
+    </TableCard>
   );
 }

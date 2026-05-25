@@ -17,7 +17,7 @@ const colors = ["#38bdf8", "#2dd4bf", "#8b5cf6", "#f59e0b", "#64748b"];
 
 export function MarketOverviewChart() {
   return (
-    <div className="h-72">
+    <div className="h-48">
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart data={tvlOverview} margin={{ top: 20, right: 12, left: -20, bottom: 0 }}>
           <defs>
@@ -27,7 +27,15 @@ export function MarketOverviewChart() {
             </linearGradient>
           </defs>
           <XAxis dataKey="date" stroke="#8195aa" fontSize={12} tickLine={false} axisLine={false} />
-          <YAxis stroke="#8195aa" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}B`} />
+          <YAxis
+            domain={[2.8, 4.4]}
+            ticks={[2.8, 3.2, 3.6, 4.0, 4.4]}
+            stroke="#8195aa"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(value) => `$${value}B`}
+          />
           <Tooltip
             contentStyle={{ background: "#07111f", border: "1px solid rgba(125, 211, 252, 0.22)", color: "#fff" }}
             formatter={(value) => [`$${value}B`, "TVL"]}
@@ -41,8 +49,8 @@ export function MarketOverviewChart() {
 
 export function SectorCompositionChart() {
   return (
-    <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
-      <div className="h-48">
+    <div className="grid gap-3 sm:grid-cols-[130px_1fr]">
+      <div className="h-32">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie data={sectorComposition} dataKey="value" nameKey="name" innerRadius={58} outerRadius={86} paddingAngle={2}>

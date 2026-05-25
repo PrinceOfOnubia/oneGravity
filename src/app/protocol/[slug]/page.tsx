@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import type { ComponentType } from "react";
 import { notFound } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Landmark, LineChart, RefreshCcw, ShieldCheck } from "lucide-react";
+import { GlassCard } from "@/components/card";
+import { PageHero } from "@/components/page-hero";
 import { ScoreRing } from "@/components/score-ring";
-import { SectionHeading } from "@/components/section-heading";
+import { SectionShell } from "@/components/section-shell";
 import { getProtocolBySlug, protocols } from "@/lib/rwa-data";
 
 type ProtocolPageProps = {
@@ -39,30 +41,27 @@ export default async function ProtocolPage({ params }: ProtocolPageProps) {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <>
+      <PageHero eyebrow="Protocol Intelligence" title={protocol.name} text={protocol.verdict} />
+      <SectionShell compact>
       <div className="grid gap-8 lg:grid-cols-[0.95fr_0.55fr]">
         <div>
-          <SectionHeading
-            eyebrow="Protocol Intelligence"
-            title={protocol.name}
-            text={protocol.verdict}
-          />
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {metrics.map(([label, value]) => (
-              <div key={label} className="glass-panel p-4">
+              <GlassCard key={label} className="p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>
                 <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-              </div>
+              </GlassCard>
             ))}
           </div>
         </div>
-        <div className="glass-panel p-6">
+        <GlassCard className="p-6">
           <ScoreRing score={protocol.oneGravityScore} tier={protocol.riskTier} />
           <p className="mt-6 text-sm leading-6 text-slate-400">
             Trust tier reflects weighted RWA Intelligence signals across issuer transparency, reserve proof, redemption clarity,
             liquidity, smart contract risk, and counterparty risk.
           </p>
-        </div>
+        </GlassCard>
       </div>
 
       <div className="mt-10 grid gap-4 lg:grid-cols-3">
@@ -72,24 +71,24 @@ export default async function ProtocolPage({ params }: ProtocolPageProps) {
       </div>
 
       <div className="mt-10 grid gap-4 lg:grid-cols-[0.7fr_0.3fr]">
-        <div className="glass-panel p-6">
+        <GlassCard className="p-6">
           <div className="flex items-center gap-3 text-teal-200">
             <LineChart size={22} />
             <h2 className="text-xl font-semibold text-white">AI-style verdict</h2>
           </div>
           <p className="mt-5 text-lg leading-8 text-slate-300">{protocol.verdict}</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="border border-sky-200/10 bg-white/[0.025] p-4">
+            <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.025] p-4">
               <p className="text-sm font-semibold text-white">Capital Flow</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">{protocol.capitalFlow}</p>
             </div>
-            <div className="border border-sky-200/10 bg-white/[0.025] p-4">
+            <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.025] p-4">
               <p className="text-sm font-semibold text-white">Yield Quality</p>
               <p className="mt-2 text-sm leading-6 text-slate-400">{protocol.yieldQuality}</p>
             </div>
           </div>
-        </div>
-        <div className="glass-panel p-6">
+        </GlassCard>
+        <GlassCard className="p-6">
           <div className="flex items-center gap-3 text-amber-200">
             <AlertTriangle size={20} />
             <h2 className="text-xl font-semibold text-white">Risk Signals</h2>
@@ -102,9 +101,10 @@ export default async function ProtocolPage({ params }: ProtocolPageProps) {
               </li>
             ))}
           </ul>
-        </div>
+        </GlassCard>
       </div>
-    </section>
+      </SectionShell>
+    </>
   );
 }
 
@@ -120,13 +120,13 @@ function InsightCard({
   score: number;
 }) {
   return (
-    <div className="glass-panel p-5">
+    <GlassCard className="p-5">
       <div className="flex items-center justify-between gap-4">
         <Icon className="text-teal-200" size={22} />
         <span className="font-mono text-sm text-slate-300">{score}/100</span>
       </div>
       <h2 className="mt-5 text-lg font-semibold text-white">{title}</h2>
       <p className="mt-3 text-sm leading-6 text-slate-400">{text}</p>
-    </div>
+    </GlassCard>
   );
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AppShell } from "@/components/app-shell";
+import { PageShell } from "@/components/page-shell";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://onegravity.xyz"),
@@ -30,11 +30,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en">
       <body>
-        <div className="terminal-grid min-h-screen">
-          <Header />
-          <main>{children}</main>
-          <Footer />
-        </div>
+        <PageShell>
+          <AppShell>{children}</AppShell>
+        </PageShell>
       </body>
     </html>
   );

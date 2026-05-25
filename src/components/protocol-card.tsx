@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowUpRight, Gauge, Layers, ShieldCheck } from "lucide-react";
+import { GlassCard } from "@/components/card";
+import { Badge } from "@/components/badge";
 import type { Protocol } from "@/lib/rwa-data";
-import { riskTierTone } from "@/lib/scoring";
 
 export function ProtocolCard({ protocol }: { protocol: Protocol }) {
   return (
-    <Link href={`/protocol/${protocol.slug}`} className="glass-panel group block p-5 transition hover:-translate-y-1 hover:border-sky-200/35">
+    <Link href={`/protocol/${protocol.slug}`} className="group block transition hover:-translate-y-1">
+      <GlassCard className="h-full p-5 transition group-hover:border-cyan-300/25">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{protocol.category}</p>
@@ -21,8 +23,9 @@ export function ProtocolCard({ protocol }: { protocol: Protocol }) {
       </div>
       <div className="mt-5 flex items-center justify-between border-t border-sky-200/10 pt-4">
         <span className="text-sm text-slate-400">{protocol.chain}</span>
-        <span className={`border px-2.5 py-1 text-xs font-semibold ${riskTierTone(protocol.riskTier)}`}>{protocol.riskTier}</span>
+        <Badge tone={protocol.riskTier === "Prime" ? "teal" : protocol.riskTier === "Strong" ? "blue" : "amber"}>{protocol.riskTier}</Badge>
       </div>
+      </GlassCard>
     </Link>
   );
 }

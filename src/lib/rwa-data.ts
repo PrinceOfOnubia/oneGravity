@@ -1,6 +1,6 @@
 import { calculateOneGravityScore, getRiskTier, type RiskTier } from "./scoring";
 
-export type ProtocolCategory = "Treasuries" | "Credit" | "Real Estate" | "Stablecoin Yield";
+export type ProtocolCategory = "Treasuries" | "Private Credit" | "Real Estate" | "Commodities" | "Stablecoin Yield";
 
 export type Protocol = {
   name: string;
@@ -65,7 +65,7 @@ const rawProtocols = [
   {
     name: "Maple",
     slug: "maple",
-    category: "Credit",
+    category: "Private Credit",
     chain: "Ethereum, Base",
     tvl: "$310M",
     avgYield: "12.34%",
@@ -93,7 +93,7 @@ const rawProtocols = [
   {
     name: "Centrifuge",
     slug: "centrifuge",
-    category: "Credit",
+    category: "Private Credit",
     chain: "Centrifuge, Ethereum",
     tvl: "$285M",
     avgYield: "9.21%",
@@ -121,7 +121,7 @@ const rawProtocols = [
   {
     name: "Backed",
     slug: "backed",
-    category: "Treasuries",
+    category: "Commodities",
     chain: "Ethereum, Gnosis",
     tvl: "$180M",
     avgYield: "5.12%",
@@ -233,7 +233,7 @@ const rawProtocols = [
   {
     name: "Maker/Sky RWA",
     slug: "maker-sky-rwa",
-    category: "Stablecoin Yield",
+    category: "Private Credit",
     chain: "Ethereum",
     tvl: "$2.1B",
     avgYield: "5.00%",
@@ -272,8 +272,9 @@ export const protocols: Protocol[] = rawProtocols.map((protocol) => {
 export const categories: Array<"All" | ProtocolCategory> = [
   "All",
   "Treasuries",
-  "Credit",
+  "Private Credit",
   "Real Estate",
+  "Commodities",
   "Stablecoin Yield"
 ];
 
